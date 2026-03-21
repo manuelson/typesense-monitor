@@ -115,6 +115,27 @@ function PollingRow({
   );
 }
 
+// Zone bar: green → amber → red
+function ZoneBar({
+  amber, red, min, max,
+  amberHex, redHex,
+}: {
+  amber: number; red: number; min: number; max: number;
+  amberHex: string; redHex: string;
+}) {
+  const total = max - min
+  const gPct = Math.max(0, ((amber - min) / total) * 100)
+  const aPct = Math.max(0, ((red - amber) / total) * 100)
+  const rPct = Math.max(0, ((max - red) / total) * 100)
+  return (
+    <div className="flex h-1.5 w-full overflow-hidden rounded-full">
+      <div className="bg-green-500/40 transition-all duration-200" style={{ width: `${gPct}%` }} />
+      <div className="transition-all duration-200" style={{ width: `${aPct}%`, backgroundColor: `${amberHex}66` }} />
+      <div className="transition-all duration-200" style={{ width: `${rPct}%`, backgroundColor: `${redHex}66` }} />
+    </div>
+  )
+}
+
 // Dual-threshold row: amber + red sliders
 function ThresholdRow({
   label,
@@ -131,18 +152,13 @@ function ThresholdRow({
   max: number;
   step: number;
 }) {
-  const thresholds = useSettingsStore((s) => s.thresholds[metric]) as {
-    amber: number;
-    red: number;
-  };
+  const thresholds = useSettingsStore((s) => s.thresholds[metric]) as { amber: number; red: number };
   const setThreshold = useSettingsStore((s) => s.setThreshold);
-  const colors = useSettingsStore((s) => s.colors);
+  const colors   = useSettingsStore((s) => s.colors);
   const amberCls = AMBER_CLASSES[colors.amber];
-  const redCls = RED_CLASSES[colors.red];
-  const defaults = THRESHOLDS_DEFAULTS[metric] as {
-    amber: number;
-    red: number;
-  };
+  const redCls   = RED_CLASSES[colors.red];
+  const defaults = THRESHOLDS_DEFAULTS[metric] as { amber: number; red: number };
+  const changed  = thresholds.amber !== defaults.amber || thresholds.red !== defaults.red;
 
   function handleChange(vals: number[]) {
     const [a, r] = vals;
@@ -153,54 +169,47 @@ function ThresholdRow({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
+      {/* Label + current values */}
       <div className="flex items-center justify-between">
         <Label className="text-[11px] text-zinc-400 font-mono">{label}</Label>
-        <div className="flex items-center gap-2 text-[10px] font-mono tabular-nums">
-          <span className={amberCls.text}>
-            {thresholds.amber}
-            {unit}
+        <div className="flex items-center gap-1.5 text-[10px] font-mono tabular-nums">
+          <span className={cn("px-1.5 py-0.5 border rounded-sm", amberCls.entry)}>
+            {thresholds.amber}{unit}
           </span>
-          <span className="text-zinc-400">/</span>
-          <span className={redCls.text}>
-            {thresholds.red}
-            {unit}
+          <span className="text-zinc-600">→</span>
+          <span className={cn("px-1.5 py-0.5 border rounded-sm", redCls.entry)}>
+            {thresholds.red}{unit}
           </span>
-          {(thresholds.amber !== defaults.amber ||
-            thresholds.red !== defaults.red) && (
-            <span className="text-amber-500">●</span>
-          )}
+          {changed && <span className="text-[8px] text-amber-500 ml-0.5">●</span>}
         </div>
       </div>
+
+      {/* Zone bar */}
+      <ZoneBar
+        amber={thresholds.amber} red={thresholds.red}
+        min={min} max={max}
+        amberHex={amberCls.hex} redHex={redCls.hex}
+      />
+
+      {/* Slider */}
       <Slider
-        min={min}
-        max={max}
-        step={step}
+        min={min} max={max} step={step}
         value={[thresholds.amber, thresholds.red]}
         onValueChange={handleChange}
-        className="[&_[role=slider]]:size-3"
+        className="[&_[role=slider]]:size-3.5"
       />
-      <div className="flex justify-between text-[9px] text-zinc-400">
-        <span>
-          {min}
-          {unit}
+
+      {/* Min / defaults / max */}
+      <div className="flex items-center justify-between text-[9px]">
+        <span className="text-zinc-600">{min}{unit}</span>
+        <span className="text-zinc-700">
+          defaults:{" "}
+          <span className={amberCls.text}>{defaults.amber}{unit}</span>
+          {" / "}
+          <span className={redCls.text}>{defaults.red}{unit}</span>
         </span>
-        <span className="flex gap-3">
-          <span>
-            <span className={cn("mr-0.5", amberCls.text)}>▲</span>
-            warn {defaults.amber}
-            {unit}
-          </span>
-          <span>
-            <span className={cn("mr-0.5", redCls.text)}>▲</span>
-            crit {defaults.red}
-            {unit}
-          </span>
-        </span>
-        <span>
-          {max}
-          {unit}
-        </span>
+        <span className="text-zinc-600">{max}{unit}</span>
       </div>
     </div>
   );
@@ -208,47 +217,47 @@ function ThresholdRow({
 
 // Single threshold row (pending writes — amber only)
 function SingleThresholdRow() {
-  const value = useSettingsStore((s) => s.thresholds.pendingWrites);
+  const value      = useSettingsStore((s) => s.thresholds.pendingWrites);
   const setThreshold = useSettingsStore((s) => s.setThreshold);
-  const colors = useSettingsStore((s) => s.colors);
-  const amberCls = AMBER_CLASSES[colors.amber];
+  const colors     = useSettingsStore((s) => s.colors);
+  const amberCls   = AMBER_CLASSES[colors.amber];
+  const changed    = value !== THRESHOLDS_DEFAULTS.pendingWrites;
+  const max        = 100;
+
+  const gPct = Math.max(0, ((value - 1) / (max - 1)) * 100)
+  const aPct = 100 - gPct
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
-        <Label className="text-[11px] text-zinc-400 font-mono">
-          Pending writes
-        </Label>
+        <Label className="text-[11px] text-zinc-400 font-mono">Pending writes</Label>
         <div className="flex items-center gap-1.5">
-          <Input
-            type="number"
-            min={1}
-            max={500}
-            value={value}
-            onChange={(e) => {
-              const v = Math.max(1, Math.min(500, Number(e.target.value)));
-              setThreshold("pendingWrites", "value", v);
-            }}
-            className="h-6 w-14 text-[11px] text-center font-mono bg-zinc-900 border-zinc-700 text-zinc-300 px-1"
-          />
-          <span className="text-[10px] text-zinc-600">batches</span>
-          {value !== THRESHOLDS_DEFAULTS.pendingWrites && (
-            <span className="text-amber-500 text-[9px]">●</span>
-          )}
+          <span className={cn("text-[10px] font-mono tabular-nums px-1.5 py-0.5 border rounded-sm", amberCls.entry)}>
+            {value} batches
+          </span>
+          {changed && <span className="text-[8px] text-amber-500">●</span>}
         </div>
       </div>
+
+      {/* Zone bar */}
+      <div className="flex h-1.5 w-full overflow-hidden rounded-full">
+        <div className="bg-green-500/40 transition-all duration-200" style={{ width: `${gPct}%` }} />
+        <div className="transition-all duration-200" style={{ width: `${aPct}%`, backgroundColor: `${amberCls.hex}66` }} />
+      </div>
+
       <Slider
-        min={1}
-        max={100}
-        step={1}
+        min={1} max={max} step={1}
         value={[value]}
         onValueChange={([v]) => setThreshold("pendingWrites", "value", v)}
-        className="[&_[role=slider]]:size-3"
+        className="[&_[role=slider]]:size-3.5"
       />
-      <p className="text-[9px] text-zinc-400">
-        <span className={cn("mr-0.5", amberCls.text)}>▲</span>
-        warn above {THRESHOLDS_DEFAULTS.pendingWrites} (default)
-      </p>
+      <div className="flex items-center justify-between text-[9px]">
+        <span className="text-zinc-600">1</span>
+        <span className="text-zinc-700">
+          default: <span className={amberCls.text}>{THRESHOLDS_DEFAULTS.pendingWrites} batches</span>
+        </span>
+        <span className="text-zinc-600">{max}</span>
+      </div>
     </div>
   );
 }
