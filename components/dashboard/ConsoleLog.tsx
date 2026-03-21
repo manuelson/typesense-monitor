@@ -3,6 +3,7 @@
 import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 import { cn } from "@/lib/utils"
 import type { LogEntry } from "@/lib/types"
+import { useSettingsStore, AMBER_CLASSES, RED_CLASSES } from "@/store/settingsStore"
 
 const EP_COLOR: Record<string, string> = {
   "/api/health":      "text-green-400",
@@ -20,22 +21,23 @@ const EP_SHORT: Record<string, string> = {
   "/api/debug":       "/debug       ",
 }
 
-function statusColor(status: number, error?: string) {
-  if (error || status === 0) return "text-red-400"
-  if (status >= 500) return "text-red-400"
-  if (status >= 400) return "text-amber-400"
-  return "text-green-500"
-}
-
-function latencyColor(ms: number) {
-  if (ms > 500) return "text-red-400"
-  if (ms > 100) return "text-amber-400"
-  return "text-zinc-600"
-}
-
 interface ConsoleLogProps { entries: LogEntry[] }
 
 export function ConsoleLog({ entries }: ConsoleLogProps) {
+  const colors   = useSettingsStore((s) => s.colors)
+  const amberCls = AMBER_CLASSES[colors.amber]
+  const redCls   = RED_CLASSES[colors.red]
+
+  const statusColor = (status: number, error?: string) => {
+    if (error || status === 0 || status >= 500) return redCls.latText
+    if (status >= 400) return amberCls.latText
+    return "text-green-500"
+  }
+  const latencyColor = (ms: number) => {
+    if (ms > 500) return redCls.latText
+    if (ms > 100) return amberCls.latText
+    return "text-zinc-600"
+  }
   const totalBadge = (
     <span className="text-[9px] text-zinc-600 tabular-nums">{entries.length} entries</span>
   )

@@ -2,30 +2,32 @@
 
 import { cn } from "@/lib/utils"
 import type { DebugResponse } from "@/lib/types"
-
-function stateClasses(state: string): string {
-  const s = state.toLowerCase()
-  if (s === "leader")    return "text-green-400 bg-green-400/10 border-green-500/30"
-  if (s === "follower")  return "text-zinc-400 bg-zinc-800/60 border-zinc-700"
-  return "text-amber-400 bg-amber-400/10 border-amber-500/30"
-}
-
-function badgeClasses(state: string): string {
-  const s = state.toLowerCase()
-  if (s === "leader")    return "text-green-300 border-green-500/40 bg-green-500/10"
-  if (s === "follower")  return "text-zinc-500 border-zinc-600 bg-zinc-800"
-  return "text-amber-300 border-amber-500/40 bg-amber-500/10"
-}
-
-function contactColor(ms: number): string {
-  if (ms > 1000) return "text-red-400"
-  if (ms > 200)  return "text-amber-400"
-  return "text-zinc-600"
-}
+import { useSettingsStore, AMBER_CLASSES, RED_CLASSES } from "@/store/settingsStore"
 
 interface PeerStatusStripProps { debug: DebugResponse | undefined }
 
 export function PeerStatusStrip({ debug }: PeerStatusStripProps) {
+  const colors   = useSettingsStore((s) => s.colors)
+  const amberCls = AMBER_CLASSES[colors.amber]
+  const redCls   = RED_CLASSES[colors.red]
+
+  const stateClasses = (state: string) => {
+    const s = state.toLowerCase()
+    if (s === "leader")   return "text-green-400 bg-green-400/10 border-green-500/30"
+    if (s === "follower") return "text-zinc-400 bg-zinc-800/60 border-zinc-700"
+    return amberCls.stateEntry
+  }
+  const badgeClasses = (state: string) => {
+    const s = state.toLowerCase()
+    if (s === "leader")   return "text-green-300 border-green-500/40 bg-green-500/10"
+    if (s === "follower") return "text-zinc-500 border-zinc-600 bg-zinc-800"
+    return amberCls.stateBadge
+  }
+  const contactColor = (ms: number) => {
+    if (ms > 1000) return redCls.latText
+    if (ms > 200)  return amberCls.latText
+    return "text-zinc-600"
+  }
   if (!debug?.peers) return null
   const peers = Object.entries(debug.peers)
   if (peers.length === 0) return null

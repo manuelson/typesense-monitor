@@ -4,21 +4,10 @@ import { useState } from "react"
 import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 import { cn } from "@/lib/utils"
 import type { StatsResponse } from "@/lib/types"
+import { useSettingsStore, AMBER_CLASSES, RED_CLASSES } from "@/store/settingsStore"
 
 type SortKey = "endpoint" | "rps" | "latency"
 type SortDir = "asc" | "desc"
-
-function latencyColor(ms: number): string {
-  if (ms > 500) return "text-red-400"
-  if (ms > 100) return "text-amber-400"
-  return "text-zinc-300"
-}
-
-function barColor(ms: number): string {
-  if (ms > 500) return "bg-red-500"
-  if (ms > 100) return "bg-amber-500"
-  return "bg-green-500"
-}
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active) return <span className="text-zinc-400 ml-1 select-none">⇅</span>
@@ -30,6 +19,13 @@ interface EndpointTableProps { stats: StatsResponse | undefined }
 export function EndpointTable({ stats }: EndpointTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("latency")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
+
+  const colors   = useSettingsStore((s) => s.colors)
+  const amberCls = AMBER_CLASSES[colors.amber]
+  const redCls   = RED_CLASSES[colors.red]
+
+  const latencyColor = (ms: number) => ms > 500 ? redCls.latText  : ms > 100 ? amberCls.latText  : "text-zinc-300"
+  const barColor     = (ms: number) => ms > 500 ? redCls.bar      : ms > 100 ? amberCls.bar      : "bg-green-500"
 
   const latencyMap = stats?.latency_ms ?? {}
   const rpsMap     = stats?.requests_per_second ?? {}

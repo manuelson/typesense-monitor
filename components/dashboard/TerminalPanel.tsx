@@ -6,25 +6,14 @@ import { ChevronDown, Terminal, ArrowDownToLine } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { LogEntry } from "@/lib/types"
 import { useTerminalStore } from "@/store/terminalStore"
+import { useSettingsStore, AMBER_CLASSES, RED_CLASSES } from "@/store/settingsStore"
 
 const EP: Record<string, { color: string; dot: string; short: string; label: string }> = {
   "/api/health":      { color: "text-green-400",  dot: "bg-green-400",  short: "/health      ", label: "HLTH" },
   "/api/stats":       { color: "text-purple-400", dot: "bg-purple-400", short: "/stats.json  ", label: "STAT" },
   "/api/metrics":     { color: "text-blue-400",   dot: "bg-blue-400",   short: "/metrics.json", label: "METR" },
-  "/api/collections": { color: "text-amber-400",  dot: "bg-amber-400",  short: "/collections ", label: "COLL" },
+    "/api/collections": { color: "text-amber-400",  dot: "bg-amber-400",  short: "/collections ", label: "COLL" },
   "/api/debug":       { color: "text-pink-400",   dot: "bg-pink-400",   short: "/debug       ", label: "DBUG" },
-}
-
-function statusColor(status: number, error?: string) {
-  if (error || status === 0) return "text-red-400"
-  if (status >= 500) return "text-red-400"
-  if (status >= 400) return "text-amber-400"
-  return "text-green-500"
-}
-function latColor(ms: number) {
-  if (ms > 500) return "text-red-400"
-  if (ms > 100) return "text-amber-400"
-  return "text-zinc-600"
 }
 
 export const TERMINAL_HEADER_H = 34
@@ -37,6 +26,21 @@ interface TerminalPanelProps {
 
 export function TerminalPanel({ entries, active = {} }: TerminalPanelProps) {
   const { open, autoScroll, toggleOpen, toggleAutoScroll } = useTerminalStore()
+
+  const colors   = useSettingsStore((s) => s.colors)
+  const amberCls = AMBER_CLASSES[colors.amber]
+  const redCls   = RED_CLASSES[colors.red]
+
+  const statusColor = (status: number, error?: string) => {
+    if (error || status === 0 || status >= 500) return redCls.latText
+    if (status >= 400) return amberCls.latText
+    return "text-green-500"
+  }
+  const latColor = (ms: number) => {
+    if (ms > 500) return redCls.latText
+    if (ms > 100) return amberCls.latText
+    return "text-zinc-600"
+  }
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new entries arrive

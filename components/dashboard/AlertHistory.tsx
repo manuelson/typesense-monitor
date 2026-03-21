@@ -3,25 +3,22 @@
 import { X, Trash2 } from "lucide-react";
 import { useAlertHistoryStore } from "@/store/alertHistoryStore";
 import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard";
+import { useSettingsStore, AMBER_CLASSES, RED_CLASSES } from "@/store/settingsStore";
 import { cn } from "@/lib/utils";
-
-function levelClasses(level: string): string {
-  if (level === "red") return "text-red-400 border-red-500/20 bg-red-500/5";
-  if (level === "amber")
-    return "text-amber-400 border-amber-500/20 bg-amber-500/5";
-  return "text-green-400 border-green-500/20 bg-green-500/5";
-}
-
-function badgeClasses(level: string): string {
-  if (level === "red") return "text-red-300 border-red-500/40 bg-red-500/10";
-  if (level === "amber")
-    return "text-amber-300 border-amber-500/40 bg-amber-500/10";
-  return "text-green-300 border-green-500/40 bg-green-500/10";
-}
 
 export function AlertHistory() {
   const { entries, remove, clear } = useAlertHistoryStore();
+  const colors   = useSettingsStore((s) => s.colors);
+  const amberCls = AMBER_CLASSES[colors.amber];
+  const redCls   = RED_CLASSES[colors.red];
+
   const sorted = [...entries].reverse(); // newest first
+
+  function levelEntry(level: string): string {
+    if (level === "red")   return redCls.entry;
+    if (level === "amber") return amberCls.entry;
+    return "text-green-400 border-green-500/20 bg-green-500/5";
+  }
 
   const badge = (
     <div className="flex items-center gap-2">
@@ -30,10 +27,7 @@ export function AlertHistory() {
       </span>
       {entries.length > 0 && (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            clear();
-          }}
+          onClick={(e) => { e.stopPropagation(); clear(); }}
           className="flex items-center gap-1 text-[9px] text-zinc-400 hover:text-red-400 transition-colors"
           title="Clear all"
         >
@@ -57,14 +51,13 @@ export function AlertHistory() {
               key={entry.id}
               className={cn(
                 "flex items-center gap-3 px-2.5 py-1.5 border text-[10px] rounded-sm group",
-                levelClasses(entry.level),
+                levelEntry(entry.level),
               )}
             >
               <span className="text-zinc-400 tabular-nums shrink-0 font-mono text-[9px]">
                 {new Date(entry.ts).toLocaleTimeString()}
               </span>
-
-              <span className=" flex-1">{entry.message}</span>
+              <span className="flex-1">{entry.message}</span>
               <button
                 onClick={() => remove(entry.id)}
                 className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-400"
