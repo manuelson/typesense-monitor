@@ -86,7 +86,7 @@ function PollingRow({
         onValueChange={([v]) => setPolling(endpoint, secondsToMs(v))}
         className="[&_[role=slider]]:size-3"
       />
-      <div className="flex justify-between text-[9px] text-zinc-700">
+      <div className="flex justify-between text-[9px] text-zinc-400">
         <span>1s</span>
         <span className="text-zinc-600">default {msToSeconds(defaultMs)}s</span>
         <span>60s</span>
@@ -132,7 +132,7 @@ function ThresholdRow({
         <Label className="text-[11px] text-zinc-400 font-mono">{label}</Label>
         <div className="flex items-center gap-2 text-[10px] font-mono tabular-nums">
           <span className={amberCls.text}>{thresholds.amber}{unit}</span>
-          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-400">/</span>
           <span className={redCls.text}>{thresholds.red}{unit}</span>
           {(thresholds.amber !== defaults.amber || thresholds.red !== defaults.red) && (
             <span className="text-amber-500">●</span>
@@ -145,7 +145,7 @@ function ThresholdRow({
         onValueChange={handleChange}
         className="[&_[role=slider]]:size-3"
       />
-      <div className="flex justify-between text-[9px] text-zinc-700">
+      <div className="flex justify-between text-[9px] text-zinc-400">
         <span>{min}{unit}</span>
         <span className="flex gap-3">
           <span>
@@ -198,7 +198,7 @@ function SingleThresholdRow() {
         onValueChange={([v]) => setThreshold("pendingWrites", "value", v)}
         className="[&_[role=slider]]:size-3"
       />
-      <p className="text-[9px] text-zinc-700">
+      <p className="text-[9px] text-zinc-400">
         <span className={cn("mr-0.5", amberCls.text)}>▲</span>
         warn above {THRESHOLDS_DEFAULTS.pendingWrites} (default)
       </p>
@@ -333,7 +333,7 @@ export function SettingsSheet() {
                 <Separator className="bg-zinc-800" />
                 <PollingRow label="/api/debug"       endpoint="debug"       defaultMs={POLLING_DEFAULTS.debug} />
 
-                <p className="text-[9px] text-zinc-700 leading-relaxed">
+                <p className="text-[9px] text-zinc-400 leading-relaxed">
                   Changes apply immediately on the next polling cycle. Lower intervals increase API load on your Typesense node.
                 </p>
               </div>
@@ -358,7 +358,7 @@ export function SettingsSheet() {
                 <Separator className="bg-zinc-800" />
                 <SingleThresholdRow />
 
-                <p className="text-[9px] text-zinc-700 leading-relaxed">
+                <p className="text-[9px] text-zinc-400 leading-relaxed">
                   Left thumb = warning (amber), right thumb = critical (red). Drag to adjust. Changes take effect on the next data cycle.
                 </p>
               </div>

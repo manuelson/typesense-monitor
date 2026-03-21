@@ -38,7 +38,7 @@ export function StatCard({ label, value, unit, sublabel, level, size = "md" }: S
         {value}
         {unit && <span className="text-xs font-normal text-zinc-600 ml-0.5">{unit}</span>}
       </p>
-      {sublabel && <p className="text-[9px] text-zinc-700 mt-0.5 truncate">{sublabel}</p>}
+      {sublabel && <p className="text-[9px] text-zinc-400 mt-0.5 truncate">{sublabel}</p>}
     </div>
   )
 }

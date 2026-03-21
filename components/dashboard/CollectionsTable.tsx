@@ -41,7 +41,7 @@ function FieldSchemaRow({ fields }: { fields: CollectionField[] }) {
     return (
       <tr>
         <td colSpan={5} className="pt-0 pb-3 px-4">
-          <div className="pl-6 text-[10px] text-zinc-700">No fields</div>
+          <div className="pl-6 text-[10px] text-zinc-400">No fields</div>
         </td>
       </tr>
     )
@@ -53,9 +53,9 @@ function FieldSchemaRow({ fields }: { fields: CollectionField[] }) {
           <table className="w-full min-w-[360px] border-collapse">
             <thead>
               <tr className="border-b border-zinc-800/60">
-                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-700 font-normal h-6 pl-3 pr-2">Field</th>
-                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-700 font-normal h-6 pr-2">Type</th>
-                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-700 font-normal h-6 pr-2 whitespace-nowrap">Attributes</th>
+                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-400 font-normal h-6 pl-3 pr-2">Field</th>
+                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-400 font-normal h-6 pr-2">Type</th>
+                <th className="text-left text-[8px] uppercase tracking-widest text-zinc-400 font-normal h-6 pr-2 whitespace-nowrap">Attributes</th>
               </tr>
             </thead>
             <tbody>
@@ -91,7 +91,7 @@ export function CollectionsTable({ collections }: CollectionsTableProps) {
   const badge = (
     <div className="flex items-center gap-2">
       <span className="text-[9px] text-zinc-600 tabular-nums">{collections.length} collections</span>
-      <span className="text-[9px] text-zinc-700">·</span>
+      <span className="text-[9px] text-zinc-400">·</span>
       <span className="text-[9px] text-zinc-600 tabular-nums">{totalDocs.toLocaleString()} docs</span>
     </div>
   )
@@ -117,7 +117,7 @@ export function CollectionsTable({ collections }: CollectionsTableProps) {
           <TableBody>
             {collections.length === 0 ? (
               <TableRow className="border-zinc-800">
-                <TableCell colSpan={6} className="text-center text-zinc-700 text-xs py-6 pl-0">
+                <TableCell colSpan={6} className="text-center text-zinc-400 text-xs py-6 pl-0">
                   NO COLLECTIONS FOUND
                 </TableCell>
               </TableRow>

@@ -20,7 +20,7 @@ export default function Error({
         {error.message ?? "An unexpected error occurred."}
       </p>
       {error.digest && (
-        <p className="text-[10px] font-mono text-zinc-700">digest: {error.digest}</p>
+        <p className="text-[10px] font-mono text-zinc-400">digest: {error.digest}</p>
       )}
       <button
         onClick={() => unstable_retry()}

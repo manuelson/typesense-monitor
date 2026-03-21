@@ -21,7 +21,7 @@ function barColor(ms: number): string {
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) return <span className="text-zinc-700 ml-1 select-none">⇅</span>
+  if (!active) return <span className="text-zinc-400 ml-1 select-none">⇅</span>
   return <span className="text-green-500 ml-1 select-none">{dir === "asc" ? "↑" : "↓"}</span>
 }
 

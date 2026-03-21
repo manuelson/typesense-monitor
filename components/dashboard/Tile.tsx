@@ -39,7 +39,7 @@ export function Tile({
         <span className="text-[9px] uppercase tracking-[0.15em] text-zinc-500 truncate">{label}</span>
         {hint && (
           <span className="relative shrink-0 cursor-default">
-            <span className="text-[9px] text-zinc-700 group-hover/tile:text-zinc-500 transition-colors select-none leading-none">ⓘ</span>
+            <span className="text-[9px] text-zinc-400 group-hover/tile:text-zinc-500 transition-colors select-none leading-none">ⓘ</span>
             <span className="
               absolute bottom-full left-0 mb-2 w-56 z-50 pointer-events-none
               bg-zinc-800 border border-zinc-700/60 shadow-2xl px-2.5 py-2
@@ -58,7 +58,7 @@ export function Tile({
       </div>
 
       {/* sublabel */}
-      {sub && <p className="text-[9px] text-zinc-700 truncate">{sub}</p>}
+      {sub && <p className="text-[9px] text-zinc-400 truncate">{sub}</p>}
     </div>
   )
 }

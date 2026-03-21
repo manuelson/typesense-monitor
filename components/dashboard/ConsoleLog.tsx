@@ -47,10 +47,10 @@ export function ConsoleLog({ entries }: ConsoleLogProps) {
         <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
         <span className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
         <span className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
-        <span className="ml-2 text-[9px] text-zinc-700 tracking-widest">TERMINAL</span>
+        <span className="ml-2 text-[9px] text-zinc-400 tracking-widest">TERMINAL</span>
       </div>
       <div className="h-52 overflow-y-auto font-mono text-[10px] leading-[1.6] px-4 pb-3">
-        {entries.length === 0 && <span className="text-zinc-700">_ awaiting requests...</span>}
+        {entries.length === 0 && <span className="text-zinc-400">_ awaiting requests...</span>}
         {entries.map((e) => {
           const epColor = EP_COLOR[e.endpoint] ?? "text-zinc-400"
           const short = EP_SHORT[e.endpoint] ?? e.endpoint
@@ -59,7 +59,7 @@ export function ConsoleLog({ entries }: ConsoleLogProps) {
           const time = e.ts.toLocaleTimeString("en-GB", { hour12: false })
           return (
             <div key={e.id} className="flex gap-2 whitespace-nowrap hover:bg-zinc-800/20 rounded px-1 -mx-1">
-              <span className="text-zinc-700 tabular-nums shrink-0">{time}</span>
+              <span className="text-zinc-400 tabular-nums shrink-0">{time}</span>
               <span className="text-zinc-600 shrink-0">GET</span>
               <span className={cn("shrink-0", epColor)}>{short}</span>
               <span className={cn("tabular-nums shrink-0 w-7 text-right", sColor)}>

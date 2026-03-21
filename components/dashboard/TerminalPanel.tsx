@@ -94,7 +94,7 @@ export function TerminalPanel({ entries, active = {} }: TerminalPanelProps) {
 
         {/* Right: count + auto-scroll toggle */}
         <div className="ml-auto flex items-center gap-2 shrink-0">
-          <span className="text-[9px] text-zinc-700 tabular-nums">{entries.length} lines</span>
+          <span className="text-[9px] text-zinc-400 tabular-nums">{entries.length} lines</span>
           <button
             onClick={toggleAutoScroll}
             title={autoScroll ? "Auto-scroll on" : "Auto-scroll off"}
@@ -121,7 +121,7 @@ export function TerminalPanel({ entries, active = {} }: TerminalPanelProps) {
           >
             <div className="h-full overflow-y-auto font-mono text-[10px] leading-[1.65] px-4 py-2">
               {entries.length === 0 && (
-                <span className="text-zinc-700">_ awaiting requests...</span>
+                <span className="text-zinc-400">_ awaiting requests...</span>
               )}
               {entries.map((e) => {
                 const info   = EP[e.endpoint]
@@ -133,7 +133,7 @@ export function TerminalPanel({ entries, active = {} }: TerminalPanelProps) {
                     key={e.id}
                     className="flex gap-2 whitespace-nowrap hover:bg-zinc-800/20 px-1 -mx-1"
                   >
-                    <span className="text-zinc-700 tabular-nums shrink-0">{time}</span>
+                    <span className="text-zinc-400 tabular-nums shrink-0">{time}</span>
                     <span className="text-zinc-600 shrink-0">GET</span>
                     <span className={cn("shrink-0", info?.color ?? "text-zinc-400")}>
                       {info?.short ?? e.endpoint}

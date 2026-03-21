@@ -63,7 +63,7 @@ export function NetworkChart({ rxData, txData, height = 220, stretch, collapsibl
       {lastTx !== undefined && (
         <span className="text-[10px] tabular-nums text-purple-400 font-medium">↑{lastTx.toFixed(1)}</span>
       )}
-      <span className="text-[9px] text-zinc-700">KB/s</span>
+      <span className="text-[9px] text-zinc-400">KB/s</span>
     </div>
   ) : undefined
 

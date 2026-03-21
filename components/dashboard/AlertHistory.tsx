@@ -25,7 +25,7 @@ export function AlertHistory() {
 
   const badge = (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] text-zinc-600 tabular-nums">
+      <span className="text-[9px] text-zinc-400 tabular-nums">
         {entries.length} entries
       </span>
       {entries.length > 0 && (
@@ -34,7 +34,7 @@ export function AlertHistory() {
             e.stopPropagation();
             clear();
           }}
-          className="flex items-center gap-1 text-[9px] text-zinc-700 hover:text-red-500 transition-colors"
+          className="flex items-center gap-1 text-[9px] text-zinc-400 hover:text-red-400 transition-colors"
           title="Clear all"
         >
           <Trash2 size={10} />
@@ -48,7 +48,7 @@ export function AlertHistory() {
     <CollapsibleCard title="Alert History" right={badge} collapsible={false}>
       <div className="px-4 pb-4 max-h-64 overflow-y-auto space-y-1 scrollbar-none">
         {sorted.length === 0 ? (
-          <p className="flex items-center justify-center text-zinc-700 text-[11px] py-6">
+          <p className="flex items-center justify-center text-zinc-400 text-[11px] py-6">
             No alerts recorded
           </p>
         ) : (
@@ -60,14 +60,14 @@ export function AlertHistory() {
                 levelClasses(entry.level),
               )}
             >
-              <span className="text-zinc-700 tabular-nums shrink-0 font-mono text-[9px]">
+              <span className="text-zinc-400 tabular-nums shrink-0 font-mono text-[9px]">
                 {new Date(entry.ts).toLocaleTimeString()}
               </span>
 
               <span className=" flex-1">{entry.message}</span>
               <button
                 onClick={() => remove(entry.id)}
-                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-600 hover:text-red-400"
+                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-400"
                 title="Delete"
               >
                 <X size={11} />

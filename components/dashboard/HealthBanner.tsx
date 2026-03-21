@@ -106,7 +106,7 @@ export function HealthBanner({
 
       {alerts.length > 0 && (
         <>
-          <span className="text-zinc-700 shrink-0">|</span>
+          <span className="text-zinc-500 shrink-0">|</span>
           <div className="flex items-center gap-2 overflow-x-auto flex-1 min-w-0">
             {alerts.map((alert) => (
               <span
@@ -133,7 +133,7 @@ export function HealthBanner({
           {onClearAll && alerts.length > 1 && (
             <button
               onClick={onClearAll}
-              className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition-colors shrink-0 ml-auto"
+              className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-zinc-400 hover:text-zinc-200 transition-colors shrink-0 ml-auto"
               title="Clear all alerts"
             >
               <XCircle size={11} />

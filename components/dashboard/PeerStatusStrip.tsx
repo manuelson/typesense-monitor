@@ -33,7 +33,7 @@ export function PeerStatusStrip({ debug }: PeerStatusStripProps) {
   return (
     <div className="px-6 py-2 border-b border-zinc-800/60 bg-zinc-950/80">
       <div className="max-w-[1800px] mx-auto flex items-center gap-2 flex-wrap">
-        <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-700 shrink-0 mr-1">Cluster</span>
+        <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-400 shrink-0 mr-1">Cluster</span>
         {peers.map(([addr, peer]) => (
           <div
             key={addr}
