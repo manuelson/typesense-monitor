@@ -18,6 +18,7 @@ import { useAlertHistoryStore } from "@/store/alertHistoryStore"
 import { useStatsCacheStore } from "@/store/statsCacheStore"
 import { useSettingsStore } from "@/store/settingsStore"
 
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { Tile } from "@/components/dashboard/Tile"
 import { HeaderBar } from "@/components/dashboard/HeaderBar"
 import { HealthBanner } from "@/components/dashboard/HealthBanner"
@@ -209,6 +210,7 @@ export function Dashboard() {
   const isLoading = hLoading && !health && !stats && !metrics && !cache.health && !noData
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div
       className="min-h-screen bg-zinc-950 text-zinc-400"
       style={{ paddingBottom: terminalH + 8 }}
@@ -246,32 +248,32 @@ export function Dashboard() {
               <Tile large label="Search QPS"
                 value={stats?.search_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
                 sub="searches / sec"
-                hint="Search queries per second. Spikes may indicate missing indexes or under-provisioned replicas."
+                hint="Search queries processed per second by the cluster. Sustained spikes may indicate missing read replicas or unoptimized indexes."
                 source="GET /stats.json → search_requests_per_second"
               />
               <Tile large label="Write QPS"
                 value={stats?.write_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
                 sub="writes / sec"
-                hint="Document writes per second (imports, upserts, deletes). High write load competes with search throughput."
+                hint="Document writes per second (imports, upserts, deletes). High write load competes with search throughput and can increase search latency."
                 source="GET /stats.json → write_requests_per_second"
               />
               <Tile large label="Search Latency" level={latLevel}
                 value={stats?.search_latency_ms?.toFixed(0) ?? "—"} unit="ms"
                 sub={`import: ${stats?.import_latency_ms?.toFixed(0) ?? "—"} ms`}
-                hint="Avg search latency. Only recorded when searches are active. Amber >100 ms, red >500 ms."
+                hint="Average search latency over the last polling interval. Only recorded when searches are active. Above 100 ms indicates degradation; above 500 ms is critical."
                 source="GET /stats.json → search_latency_ms"
               />
               <Tile large label="CPU" level={cpuLevel}
                 value={cpu > 0 ? cpu.toFixed(1) : "—"} unit="%"
                 sub={`1 min avg: ${metrics?.system_cpu_efficiency_percent_last_minute?.toFixed(1) ?? "—"} %`}
-                hint="Overall CPU usage across all cores. Amber >70 %, red >90 %."
+                hint="CPU usage across all server cores. Typesense is CPU-intensive during complex searches and reindexing. Above 70% triggers a warning; above 90% is critical."
                 source="GET /metrics.json → system_cpu_active_percentage"
               />
               <Tile large label="Memory" level={memLevel}
                 value={memPct} unit="%"
                 sub={`${fmtBytes(memUsed)} / ${fmtBytes(memTotal)}`}
-                hint="System RAM in use. Amber >80 %, red >95 %. Typesense keeps indexes in memory."
-                source="GET /metrics.json → system_memory_used_bytes / total"
+                hint="System RAM in use. Typesense keeps all indexes in memory for maximum speed, so high usage is expected. Above 95% risks OOM kills and node restarts."
+                source="GET /metrics.json → system_memory_used_bytes / system_memory_total_bytes"
               />
             </div>
           </div>
@@ -281,31 +283,31 @@ export function Dashboard() {
             <div className="grid grid-cols-5 gap-2 min-w-[560px]">
               <Tile label="Total QPS"
                 value={stats?.total_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
-                hint="All request types combined: search + write + delete + import."
+                hint="Total requests per second across all types: searches, writes, deletes, and imports combined."
                 source="GET /stats.json → total_requests_per_second"
               />
               <Tile label="Disk" level={diskLevel}
                 value={diskTotal > 0 ? ((diskUsed / diskTotal) * 100).toFixed(0) : "—"} unit="%"
                 sub={`${fmtBytes(diskUsed)} / ${fmtBytes(diskTotal)}`}
-                hint="Disk space used. Amber >80 %, red >95 %. Typesense stores indexes on disk."
-                source="GET /metrics.json → system_disk_used_bytes / total"
+                hint="Disk space in use. Typesense persists indexes to disk to survive restarts. If the disk fills up, the node cannot index new documents."
+                source="GET /metrics.json → system_disk_used_bytes / system_disk_total_bytes"
               />
               <Tile label="Pending Writes" level={pendingLevel}
                 value={String(stats?.pending_write_batches ?? "—")}
                 sub="write batches"
-                hint="Write batches queued but not yet applied. Growing queue = writes outpacing disk."
+                hint="Write batches queued but not yet applied to the index. A growing queue means writes are outpacing disk throughput. Should be 0 under normal conditions."
                 source="GET /stats.json → pending_write_batches"
               />
               <Tile label="Net RX"
                 value={fmtBytes(metrics?.system_network_received_bytes ?? 0)}
                 sub="received since start"
-                hint="Total bytes received by this node since process start (cumulative, not rate)."
+                hint="Total bytes received by this node since process start (cumulative, not a rate). Useful for detecting nodes receiving more traffic than others in a cluster."
                 source="GET /metrics.json → system_network_received_bytes"
               />
               <Tile label="Net TX"
                 value={fmtBytes(metrics?.system_network_sent_bytes ?? 0)}
                 sub="sent since start"
-                hint="Total bytes sent by this node since process start (cumulative, not rate)."
+                hint="Total bytes sent by this node since process start (cumulative, not a rate). High TX on a leader node may indicate heavy replication to followers."
                 source="GET /metrics.json → system_network_sent_bytes"
               />
             </div>
@@ -352,5 +354,6 @@ export function Dashboard() {
       {/* ── Fixed bottom terminal (VSCode style) ── */}
       <TerminalPanel entries={logEntries} active={activeEps} />
     </div>
+    </TooltipProvider>
   )
 }
