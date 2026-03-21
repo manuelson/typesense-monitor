@@ -5,6 +5,7 @@ import useSWR from "swr"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
+import { cn } from "@/lib/utils"
 import { fmtBytes } from "@/lib/format"
 import { computeAlerts, overallLevel } from "@/lib/alerts"
 import type {
@@ -216,7 +217,9 @@ export function Dashboard() {
       style={{ paddingBottom: terminalH + 8 }}
     >
       <HeaderBar version={debug?.version} lastSync={lastSync} peerCount={peerCount} raftState={debug?.state} />
-      <PeerStatusStrip debug={debug} />
+      <div className={cn("transition-opacity duration-500", paused.debug && "opacity-30 pointer-events-none")}>
+        <PeerStatusStrip debug={debug} />
+      </div>
       <HealthBanner level={level} alerts={alerts} loading={hLoading && !health}
         noData={noData} onDismiss={dismissAlert} onClearAll={clearAllAlerts} />
 
@@ -245,71 +248,91 @@ export function Dashboard() {
           {/* Primary — 5 large tiles, scrollable on mobile */}
           <div className="overflow-x-auto scrollbar-none">
             <div className="grid grid-cols-5 gap-2 min-w-[560px]">
-              <Tile large label="Search QPS"
-                value={stats?.search_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
-                sub="searches / sec"
-                hint="Search queries processed per second by the cluster. Sustained spikes may indicate missing read replicas or unoptimized indexes."
-                source="GET /stats.json → search_requests_per_second"
-              />
-              <Tile large label="Write QPS"
-                value={stats?.write_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
-                sub="writes / sec"
-                hint="Document writes per second (imports, upserts, deletes). High write load competes with search throughput and can increase search latency."
-                source="GET /stats.json → write_requests_per_second"
-              />
-              <Tile large label="Search Latency" level={latLevel}
-                value={stats?.search_latency_ms?.toFixed(0) ?? "—"} unit="ms"
-                sub={`import: ${stats?.import_latency_ms?.toFixed(0) ?? "—"} ms`}
-                hint="Average search latency over the last polling interval. Only recorded when searches are active. Above 100 ms indicates degradation; above 500 ms is critical."
-                source="GET /stats.json → search_latency_ms"
-              />
-              <Tile large label="CPU" level={cpuLevel}
-                value={cpu > 0 ? cpu.toFixed(1) : "—"} unit="%"
-                sub={`1 min avg: ${metrics?.system_cpu_efficiency_percent_last_minute?.toFixed(1) ?? "—"} %`}
-                hint="CPU usage across all server cores. Typesense is CPU-intensive during complex searches and reindexing. Above 70% triggers a warning; above 90% is critical."
-                source="GET /metrics.json → system_cpu_active_percentage"
-              />
-              <Tile large label="Memory" level={memLevel}
-                value={memPct} unit="%"
-                sub={`${fmtBytes(memUsed)} / ${fmtBytes(memTotal)}`}
-                hint="System RAM in use. Typesense keeps all indexes in memory for maximum speed, so high usage is expected. Above 95% risks OOM kills and node restarts."
-                source="GET /metrics.json → system_memory_used_bytes / system_memory_total_bytes"
-              />
+              <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+                <Tile large label="Search QPS"
+                  value={stats?.search_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
+                  sub="searches / sec"
+                  hint="Search queries processed per second by the cluster. Sustained spikes may indicate missing read replicas or unoptimized indexes."
+                  source="GET /stats.json → search_requests_per_second"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+                <Tile large label="Write QPS"
+                  value={stats?.write_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
+                  sub="writes / sec"
+                  hint="Document writes per second (imports, upserts, deletes). High write load competes with search throughput and can increase search latency."
+                  source="GET /stats.json → write_requests_per_second"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+                <Tile large label="Search Latency" level={latLevel}
+                  value={stats?.search_latency_ms?.toFixed(0) ?? "—"} unit="ms"
+                  sub={`import: ${stats?.import_latency_ms?.toFixed(0) ?? "—"} ms`}
+                  hint="Average search latency over the last polling interval. Only recorded when searches are active. Above 100 ms indicates degradation; above 500 ms is critical."
+                  source="GET /stats.json → search_latency_ms"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+                <Tile large label="CPU" level={cpuLevel}
+                  value={cpu > 0 ? cpu.toFixed(1) : "—"} unit="%"
+                  sub={`1 min avg: ${metrics?.system_cpu_efficiency_percent_last_minute?.toFixed(1) ?? "—"} %`}
+                  hint="CPU usage across all server cores. Typesense is CPU-intensive during complex searches and reindexing. Above 70% triggers a warning; above 90% is critical."
+                  source="GET /metrics.json → system_cpu_active_percentage"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+                <Tile large label="Memory" level={memLevel}
+                  value={memPct} unit="%"
+                  sub={`${fmtBytes(memUsed)} / ${fmtBytes(memTotal)}`}
+                  hint="System RAM in use. Typesense keeps all indexes in memory for maximum speed, so high usage is expected. Above 95% risks OOM kills and node restarts."
+                  source="GET /metrics.json → system_memory_used_bytes / system_memory_total_bytes"
+                />
+              </div>
             </div>
           </div>
 
           {/* Secondary — 5 small tiles */}
           <div className="overflow-x-auto scrollbar-none">
             <div className="grid grid-cols-5 gap-2 min-w-[560px]">
-              <Tile label="Total QPS"
-                value={stats?.total_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
-                hint="Total requests per second across all types: searches, writes, deletes, and imports combined."
-                source="GET /stats.json → total_requests_per_second"
-              />
-              <Tile label="Disk" level={diskLevel}
-                value={diskTotal > 0 ? ((diskUsed / diskTotal) * 100).toFixed(0) : "—"} unit="%"
-                sub={`${fmtBytes(diskUsed)} / ${fmtBytes(diskTotal)}`}
-                hint="Disk space in use. Typesense persists indexes to disk to survive restarts. If the disk fills up, the node cannot index new documents."
-                source="GET /metrics.json → system_disk_used_bytes / system_disk_total_bytes"
-              />
-              <Tile label="Pending Writes" level={pendingLevel}
-                value={String(stats?.pending_write_batches ?? "—")}
-                sub="write batches"
-                hint="Write batches queued but not yet applied to the index. A growing queue means writes are outpacing disk throughput. Should be 0 under normal conditions."
-                source="GET /stats.json → pending_write_batches"
-              />
-              <Tile label="Net RX"
-                value={fmtBytes(metrics?.system_network_received_bytes ?? 0)}
-                sub="received since start"
-                hint="Total bytes received by this node since process start (cumulative, not a rate). Useful for detecting nodes receiving more traffic than others in a cluster."
-                source="GET /metrics.json → system_network_received_bytes"
-              />
-              <Tile label="Net TX"
-                value={fmtBytes(metrics?.system_network_sent_bytes ?? 0)}
-                sub="sent since start"
-                hint="Total bytes sent by this node since process start (cumulative, not a rate). High TX on a leader node may indicate heavy replication to followers."
-                source="GET /metrics.json → system_network_sent_bytes"
-              />
+              <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+                <Tile label="Total QPS"
+                  value={stats?.total_requests_per_second?.toFixed(1) ?? "—"} unit="rps"
+                  hint="Total requests per second across all types: searches, writes, deletes, and imports combined."
+                  source="GET /stats.json → total_requests_per_second"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+                <Tile label="Disk" level={diskLevel}
+                  value={diskTotal > 0 ? ((diskUsed / diskTotal) * 100).toFixed(0) : "—"} unit="%"
+                  sub={`${fmtBytes(diskUsed)} / ${fmtBytes(diskTotal)}`}
+                  hint="Disk space in use. Typesense persists indexes to disk to survive restarts. If the disk fills up, the node cannot index new documents."
+                  source="GET /metrics.json → system_disk_used_bytes / system_disk_total_bytes"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+                <Tile label="Pending Writes" level={pendingLevel}
+                  value={String(stats?.pending_write_batches ?? "—")}
+                  sub="write batches"
+                  hint="Write batches queued but not yet applied to the index. A growing queue means writes are outpacing disk throughput. Should be 0 under normal conditions."
+                  source="GET /stats.json → pending_write_batches"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+                <Tile label="Net RX"
+                  value={fmtBytes(metrics?.system_network_received_bytes ?? 0)}
+                  sub="received since start"
+                  hint="Total bytes received by this node since process start (cumulative, not a rate). Useful for detecting nodes receiving more traffic than others in a cluster."
+                  source="GET /metrics.json → system_network_received_bytes"
+                />
+              </div>
+              <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+                <Tile label="Net TX"
+                  value={fmtBytes(metrics?.system_network_sent_bytes ?? 0)}
+                  sub="sent since start"
+                  hint="Total bytes sent by this node since process start (cumulative, not a rate). High TX on a leader node may indicate heavy replication to followers."
+                  source="GET /metrics.json → system_network_sent_bytes"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -319,8 +342,8 @@ export function Dashboard() {
 
           {/* Left column: 2 charts stacked */}
           <div className="grid grid-rows-2 gap-3 h-full">
-            <LatencyChart data={latencySeries}                                    stretch collapsible={false} />
-            <CpuChart     data={cpuSeries}                                        stretch collapsible={false} />
+            <div className={cn("transition-opacity duration-500", paused.stats   && "opacity-30 pointer-events-none")}><LatencyChart data={latencySeries} stretch collapsible={false} /></div>
+            <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}><CpuChart     data={cpuSeries}    stretch collapsible={false} /></div>
           </div>
 
           {/* Center: raw canvas, no card wrapper */}
@@ -330,22 +353,28 @@ export function Dashboard() {
 
           {/* Right column: 2 charts stacked */}
           <div className="grid grid-rows-2 gap-3 h-full">
-            <QpsChart    searchData={searchQpsSeries} writeData={writeQpsSeries} stretch collapsible={false} />
-            <MemoryChart data={memorySeries} totalBytes={memTotal}               stretch collapsible={false} />
+            <div className={cn("transition-opacity duration-500", paused.stats   && "opacity-30 pointer-events-none")}><QpsChart    searchData={searchQpsSeries} writeData={writeQpsSeries} stretch collapsible={false} /></div>
+            <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}><MemoryChart data={memorySeries} totalBytes={memTotal}          stretch collapsible={false} /></div>
           </div>
         </div>
 
         {/* ── Per-endpoint breakdown ── */}
-        <EndpointTable stats={stats} />
+        <div className={cn("transition-opacity duration-500 h-full", paused.stats && "opacity-30 pointer-events-none")}>
+          <EndpointTable stats={stats} />
+        </div>
 
         {/* ── Network I/O + Alert History ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <NetworkChart rxData={rxSeries} txData={txSeries} collapsible={false} />
+          <div className={cn("transition-opacity duration-500 h-full", paused.metrics && "opacity-30 pointer-events-none")}>
+            <NetworkChart rxData={rxSeries} txData={txSeries} collapsible={false} />
+          </div>
           <AlertHistory />
         </div>
 
         {/* ── Collections ── */}
-        <CollectionsTable collections={!noData && Array.isArray(collections) ? collections : []} />
+        <div className={cn("transition-opacity duration-500", paused.collections && "opacity-30 pointer-events-none")}>
+          <CollectionsTable collections={!noData && Array.isArray(collections) ? collections : []} />
+        </div>
 
           </motion.main>
         )}

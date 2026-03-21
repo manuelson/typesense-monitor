@@ -51,7 +51,7 @@ export function Tile({
         : "text-zinc-100";
 
   return (
-    <div className="relative bg-zinc-900 border border-zinc-800 flex flex-col p-3 gap-1">
+    <div className="relative bg-zinc-900 border border-zinc-800 flex flex-col p-3 gap-1 h-full">
       {/* top accent bar */}
       <div className={cn("absolute top-0 inset-x-0 h-[2px]", bar)} />
 
