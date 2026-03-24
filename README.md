@@ -2,6 +2,8 @@
 
 A real-time monitoring dashboard for [Typesense](https://typesense.org) clusters, built with Next.js 16, React 19, and Tailwind CSS v4.
 
+![Typesense Stats Dashboard](docs/images/screenshot.png)
+
 ---
 
 ## Features

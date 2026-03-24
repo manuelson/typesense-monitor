@@ -8,6 +8,16 @@ function parseHostUrl(hostUrl: string): { host: string; port: number; protocol: 
   return { host, port, protocol }
 }
 
+/** Create a one-off client from explicit host + apiKey (not a singleton). */
+export function createClientFromConfig(hostUrl: string, apiKey: string): Client {
+  const { host, port, protocol } = parseHostUrl(hostUrl)
+  return new Client({
+    nodes: [{ host, port, protocol }],
+    apiKey,
+    connectionTimeoutSeconds: 10,
+  })
+}
+
 function createClient(): Client {
   const hostUrl = process.env.TYPESENSE_HOST
   const apiKey  = process.env.TYPESENSE_API_KEY
@@ -16,13 +26,7 @@ function createClient(): Client {
     throw new Error("TYPESENSE_HOST and TYPESENSE_API_KEY must be set")
   }
 
-  const { host, port, protocol } = parseHostUrl(hostUrl)
-
-  return new Client({
-    nodes: [{ host, port, protocol }],
-    apiKey,
-    connectionTimeoutSeconds: 10,
-  })
+  return createClientFromConfig(hostUrl, apiKey)
 }
 
 export function isTypesenseConfigured(): boolean {

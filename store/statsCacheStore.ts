@@ -17,6 +17,7 @@ interface StatsCacheState {
   setMetrics:     (d: ParsedMetrics)   => void
   setCollections: (d: Collection[])    => void
   setDebug:       (d: DebugResponse)   => void
+  reset:          () => void
 }
 
 export const useStatsCacheStore = create<StatsCacheState>()(
@@ -33,6 +34,7 @@ export const useStatsCacheStore = create<StatsCacheState>()(
       setMetrics:     (d) => set({ metrics:     d }),
       setCollections: (d) => set({ collections: d }),
       setDebug:       (d) => set({ debug:       d }),
+      reset: () => set({ health: null, stats: null, metrics: null, collections: null, debug: null }),
     }),
     {
       name: "typesense-stats-cache",

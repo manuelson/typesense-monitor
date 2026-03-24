@@ -4,11 +4,11 @@ import type { TimePoint } from "@/lib/types"
 
 /**
  * Tracks cumulative network counters and converts them to a KB/s delta series.
- * Returns [rxSeries, txSeries, addPoint]
+ * Returns [rxSeries, txSeries, addPoint, reset]
  */
-export function useNetworkDelta(): [TimePoint[], TimePoint[], (rx: number, tx: number) => void] {
-  const [rxSeries, addRx] = useTimeSeries(60)
-  const [txSeries, addTx] = useTimeSeries(60)
+export function useNetworkDelta(): [TimePoint[], TimePoint[], (rx: number, tx: number) => void, () => void] {
+  const [rxSeries, addRx, resetRx] = useTimeSeries(60)
+  const [txSeries, addTx, resetTx] = useTimeSeries(60)
   const prevRef = useRef<{ rx: number; tx: number; t: number } | null>(null)
 
   const addPoint = useCallback((rx: number, tx: number) => {
@@ -25,5 +25,11 @@ export function useNetworkDelta(): [TimePoint[], TimePoint[], (rx: number, tx: n
     prevRef.current = { rx, tx, t: now }
   }, [addRx, addTx])
 
-  return [rxSeries, txSeries, addPoint]
+  const reset = useCallback(() => {
+    resetRx()
+    resetTx()
+    prevRef.current = null
+  }, [resetRx, resetTx])
+
+  return [rxSeries, txSeries, addPoint, reset]
 }

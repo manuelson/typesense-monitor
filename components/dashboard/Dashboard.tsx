@@ -18,6 +18,7 @@ import { useTerminalStore } from "@/store/terminalStore"
 import { useAlertHistoryStore } from "@/store/alertHistoryStore"
 import { useStatsCacheStore } from "@/store/statsCacheStore"
 import { useSettingsStore } from "@/store/settingsStore"
+import { useClustersStore, ENV_CLUSTER_ID } from "@/store/clustersStore"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Tile } from "@/components/dashboard/Tile"
@@ -61,13 +62,30 @@ export function Dashboard() {
   const paused     = useSettingsStore((s) => s.paused)
   const thresholds = useSettingsStore((s) => s.thresholds)
 
+  const { clusters, activeId } = useClustersStore()
+  const activeCluster = activeId === ENV_CLUSTER_ID
+    ? null
+    : clusters.find((c) => c.id === activeId) ?? null
+
   // Time series — callback-based, no deduplication bug
-  const [cpuSeries,       addCpuPoint]     = useTimeSeries(60)
-  const [memorySeries,    addMemoryPoint]  = useTimeSeries(60)
-  const [latencySeries,   addLatencyPoint] = useTimeSeries(60)
-  const [searchQpsSeries, addSearchQps]    = useTimeSeries(60)
-  const [writeQpsSeries,  addWriteQps]     = useTimeSeries(60)
-  const [rxSeries, txSeries, addNetPoint]  = useNetworkDelta()
+  const [cpuSeries,       addCpuPoint,    resetCpu]     = useTimeSeries(60)
+  const [memorySeries,    addMemoryPoint, resetMemory]  = useTimeSeries(60)
+  const [latencySeries,   addLatencyPoint,resetLatency] = useTimeSeries(60)
+  const [searchQpsSeries, addSearchQps,   resetSearchQps] = useTimeSeries(60)
+  const [writeQpsSeries,  addWriteQps,    resetWriteQps]  = useTimeSeries(60)
+  const [rxSeries, txSeries, addNetPoint, resetNet] = useNetworkDelta()
+
+  // Reset all time-series and cache when the active cluster changes
+  const prevActiveId = useRef(activeId)
+  useEffect(() => {
+    if (prevActiveId.current === activeId) return
+    prevActiveId.current = activeId
+    resetCpu(); resetMemory(); resetLatency()
+    resetSearchQps(); resetWriteQps(); resetNet()
+    cache.reset()
+    setLastSync(null)
+    setDismissedAlerts(new Set())
+  }, [activeId, resetCpu, resetMemory, resetLatency, resetSearchQps, resetWriteQps, resetNet, cache])
 
   const addLogRef = useRef<(e: LogEntry) => void>(() => {})
   const addLog = useCallback((entry: LogEntry) => {
@@ -82,8 +100,13 @@ export function Dashboard() {
     const t0 = Date.now()
     setActiveEps((p) => ({ ...p, [url]: true }))
     let logged = false
+    const headers: Record<string, string> = {}
+    if (activeCluster) {
+      headers["x-typesense-host"]    = activeCluster.host
+      headers["x-typesense-api-key"] = activeCluster.apiKey
+    }
     try {
-      const res = await fetch(url)
+      const res = await fetch(url, { headers })
       const data = await res.json()
       addLogRef.current({
         id: `${url}-${t0}`, ts: new Date(), endpoint: url,
@@ -105,10 +128,13 @@ export function Dashboard() {
     } finally {
       setActiveEps((p) => ({ ...p, [url]: false }))
     }
-  }, [])
+  }, [activeCluster])
 
+  // SWR keys include activeId so the cache is segmented per cluster
+  // and data is refetched automatically when switching clusters.
   const { data: health, isLoading: hLoading, error: hError } = useSWR<HealthResponse>(
-    paused.health ? null : "/api/health", loggingFetcher,
+    paused.health ? null : ["/api/health", activeId],
+    ([url]) => loggingFetcher(url),
     {
       refreshInterval: polling.health,
       fallbackData: cache.health ?? undefined,
@@ -118,40 +144,56 @@ export function Dashboard() {
     }
   )
 
-  const { data: stats, error: statsError } = useSWR<StatsResponse>(paused.stats ? null : "/api/stats", loggingFetcher, {
-    refreshInterval: polling.stats,
-    fallbackData: cache.stats ?? undefined,
-    onSuccess: (d) => {
-      cache.setStats(d)
-      if (d.search_latency_ms !== undefined && (d.search_requests_per_second ?? 0) > 0)
-        addLatencyPoint(d.search_latency_ms)
-      if (d.search_requests_per_second !== undefined) addSearchQps(d.search_requests_per_second)
-      if (d.write_requests_per_second  !== undefined) addWriteQps(d.write_requests_per_second)
-    },
-  })
-  const { data: metrics } = useSWR<ParsedMetrics>(paused.metrics ? null : "/api/metrics", loggingFetcher, {
-    refreshInterval: polling.metrics,
-    fallbackData: cache.metrics ?? undefined,
-    onSuccess: (d) => {
-      cache.setMetrics(d)
-      if (d.system_cpu_efficiency_percent_average !== undefined)
-        addCpuPoint(d.system_cpu_efficiency_percent_average)
-      if (d.system_memory_used_bytes !== undefined)
-        addMemoryPoint(d.system_memory_used_bytes)
-      if (d.system_network_received_bytes !== undefined && d.system_network_sent_bytes !== undefined)
-        addNetPoint(d.system_network_received_bytes, d.system_network_sent_bytes)
-    },
-  })
-  const { data: collections } = useSWR<Collection[]>(paused.collections ? null : "/api/collections", loggingFetcher, {
-    refreshInterval: polling.collections,
-    fallbackData: cache.collections ?? undefined,
-    onSuccess: (d) => cache.setCollections(d),
-  })
-  const { data: debug } = useSWR<DebugResponse>(paused.debug ? null : "/api/debug", loggingFetcher, {
-    refreshInterval: polling.debug,
-    fallbackData: cache.debug ?? undefined,
-    onSuccess: (d) => cache.setDebug(d),
-  })
+  const { data: stats, error: statsError } = useSWR<StatsResponse>(
+    paused.stats ? null : ["/api/stats", activeId],
+    ([url]) => loggingFetcher(url),
+    {
+      refreshInterval: polling.stats,
+      fallbackData: cache.stats ?? undefined,
+      onSuccess: (d) => {
+        cache.setStats(d)
+        if (d.search_latency_ms !== undefined && (d.search_requests_per_second ?? 0) > 0)
+          addLatencyPoint(d.search_latency_ms)
+        if (d.search_requests_per_second !== undefined) addSearchQps(d.search_requests_per_second)
+        if (d.write_requests_per_second  !== undefined) addWriteQps(d.write_requests_per_second)
+      },
+    }
+  )
+  const { data: metrics } = useSWR<ParsedMetrics>(
+    paused.metrics ? null : ["/api/metrics", activeId],
+    ([url]) => loggingFetcher(url),
+    {
+      refreshInterval: polling.metrics,
+      fallbackData: cache.metrics ?? undefined,
+      onSuccess: (d) => {
+        cache.setMetrics(d)
+        if (d.system_cpu_efficiency_percent_average !== undefined)
+          addCpuPoint(d.system_cpu_efficiency_percent_average)
+        if (d.system_memory_used_bytes !== undefined)
+          addMemoryPoint(d.system_memory_used_bytes)
+        if (d.system_network_received_bytes !== undefined && d.system_network_sent_bytes !== undefined)
+          addNetPoint(d.system_network_received_bytes, d.system_network_sent_bytes)
+      },
+    }
+  )
+  const { data: collections } = useSWR<Collection[]>(
+    paused.collections ? null : ["/api/collections", activeId],
+    ([url]) => loggingFetcher(url),
+    {
+      refreshInterval: polling.collections,
+      fallbackData: cache.collections ?? undefined,
+      onSuccess: (d) => cache.setCollections(d),
+    }
+  )
+  const { data: debug } = useSWR<DebugResponse>(
+    paused.debug ? null : ["/api/debug", activeId],
+    ([url]) => loggingFetcher(url),
+    {
+      refreshInterval: polling.debug,
+      fallbackData: cache.debug ?? undefined,
+      onSuccess: (d) => cache.setDebug(d),
+    }
+  )
 
   // noData: health is unauthenticated in Typesense so hError alone isn't enough —
   // stats always requires a valid API key, making statsError the reliable signal.

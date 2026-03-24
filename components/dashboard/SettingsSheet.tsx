@@ -1,6 +1,7 @@
 "use client";
 
-import { RotateCcw, Settings } from "lucide-react";
+import { RotateCcw, Settings, Plus, Trash2, Check } from "lucide-react";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -26,6 +27,7 @@ import {
   type RedColor,
   type PollingConfig,
 } from "@/store/settingsStore";
+import { useClustersStore, ENV_CLUSTER_ID } from "@/store/clustersStore";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -369,6 +371,139 @@ function ColorPicker() {
   );
 }
 
+// ── Clusters tab ──────────────────────────────────────────────────────────────
+
+function ClustersTab() {
+  const { clusters, activeId, addCluster, removeCluster, setActiveId } = useClustersStore();
+  const [name, setName] = useState("");
+  const [host, setHost] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [error, setError] = useState("");
+
+  function handleAdd() {
+    if (!name.trim()) { setError("Name is required"); return; }
+    try { new URL(host.trim()) } catch {
+      setError("Host must be a valid URL (e.g. https://xxx.typesense.net)"); return;
+    }
+    if (!apiKey.trim()) { setError("API key is required"); return; }
+    addCluster({ name: name.trim(), host: host.trim(), apiKey: apiKey.trim() });
+    setName(""); setHost(""); setApiKey(""); setError("");
+  }
+
+  const allOptions = [{ id: ENV_CLUSTER_ID, name: "Default", host: "(env vars)", apiKey: "" }, ...clusters];
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Existing clusters */}
+      <div className="flex flex-col gap-2">
+        <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-500 font-semibold">
+          Clusters
+        </span>
+        {allOptions.map((c) => {
+          const isActive = c.id === activeId;
+          return (
+            <div
+              key={c.id}
+              className={cn(
+                "flex items-center justify-between px-3 py-2 border text-[11px] font-mono",
+                isActive
+                  ? "border-green-800 bg-green-950/30 text-zinc-300"
+                  : "border-zinc-800 text-zinc-500 hover:border-zinc-600",
+              )}
+            >
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  {isActive && <span className="text-green-400">●</span>}
+                  <span className={isActive ? "text-green-400" : ""}>{c.name}</span>
+                </div>
+                <span className="text-[9px] text-zinc-600 truncate">{c.host}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {!isActive && (
+                  <button
+                    onClick={() => setActiveId(c.id)}
+                    className="flex items-center gap-1 text-[9px] text-zinc-600 hover:text-green-400 transition-colors"
+                    title="Set as active"
+                  >
+                    <Check size={10} />
+                    Use
+                  </button>
+                )}
+                {c.id !== ENV_CLUSTER_ID && (
+                  <button
+                    onClick={() => removeCluster(c.id)}
+                    className="text-zinc-700 hover:text-red-400 transition-colors"
+                    title="Remove cluster"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Separator className="bg-zinc-800" />
+
+      {/* Add cluster form */}
+      <div className="flex flex-col gap-3">
+        <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-500 font-semibold">
+          Add cluster
+        </span>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[10px] text-zinc-500 font-mono">Name</Label>
+          <Input
+            placeholder="Production"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-7 text-[11px] font-mono bg-zinc-900 border-zinc-700 text-zinc-300"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[10px] text-zinc-500 font-mono">Host URL</Label>
+          <Input
+            placeholder="https://xxx.a1.typesense.net"
+            value={host}
+            onChange={(e) => setHost(e.target.value)}
+            className="h-7 text-[11px] font-mono bg-zinc-900 border-zinc-700 text-zinc-300"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[10px] text-zinc-500 font-mono">API Key</Label>
+          <Input
+            type="password"
+            placeholder="••••••••••••••••"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            className="h-7 text-[11px] font-mono bg-zinc-900 border-zinc-700 text-zinc-300"
+          />
+        </div>
+
+        {error && (
+          <p className="text-[10px] text-red-400">{error}</p>
+        )}
+
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-1.5 self-start text-[10px] text-zinc-400 hover:text-green-400 border border-zinc-700 hover:border-green-800 px-3 py-1.5 transition-colors"
+        >
+          <Plus size={11} />
+          Add cluster
+        </button>
+      </div>
+
+      <p className="text-[9px] text-zinc-600 leading-relaxed">
+        Clusters are stored in your browser. API keys are only sent to your own
+        Next.js server and never leave it.
+      </p>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function SettingsSheet() {
@@ -418,6 +553,12 @@ export function SettingsSheet() {
               className="text-[10px] uppercase tracking-widest pb-2.5 data-[state=active]:text-green-400"
             >
               Colors
+            </TabsTrigger>
+            <TabsTrigger
+              value="clusters"
+              className="text-[10px] uppercase tracking-widest pb-2.5 data-[state=active]:text-green-400"
+            >
+              Clusters
             </TabsTrigger>
           </TabsList>
 
@@ -537,6 +678,15 @@ export function SettingsSheet() {
             <ScrollArea className="h-full">
               <div className="px-6 py-5">
                 <ColorPicker />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* ── Clusters ── */}
+          <TabsContent value="clusters" className="flex-1 min-h-0 mt-0">
+            <ScrollArea className="h-full">
+              <div className="px-6 py-5">
+                <ClustersTab />
               </div>
             </ScrollArea>
           </TabsContent>
